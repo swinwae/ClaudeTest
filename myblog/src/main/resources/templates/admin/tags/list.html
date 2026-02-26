@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      lang="zh-CN">
+<head th:replace="~{layout/admin-base :: head('标签管理')}"></head>
+<body>
+<div class="admin-layout">
+
+  <div th:replace="~{layout/admin-base :: sidebar(${adminSection})}"></div>
+
+  <div class="admin-main">
+    <div th:replace="~{layout/admin-base :: topbar('标签管理')}"></div>
+
+    <div class="admin-content">
+
+      <!-- 提示消息 -->
+      <div th:if="${successMsg}" class="alert alert-success">
+        <span th:text="${successMsg}"></span>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 340px;gap:20px;align-items:start;">
+
+        <!-- 标签列表 -->
+        <div class="admin-card">
+          <div class="admin-card-header">
+            <span class="admin-card-title">所有标签</span>
+            <span style="font-size:0.8rem;color:var(--text-muted);" th:text="${tags.size()} + ' 个标签'">0 个标签</span>
+          </div>
+          <div class="admin-table-wrapper">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>标签名</th>
+                  <th>Slug</th>
+                  <th>文章数</th>
+                  <th>创建时间</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr th:each="tag : ${tags}">
+                  <td>
+                    <span class="badge badge-draft" th:text="${tag.name}">标签名</span>
+                  </td>
+                  <td style="color:var(--text-muted);font-size:0.85rem;font-family:var(--font-mono);"
+                      th:text="${tag.slug}">slug</td>
+                  <td style="color:var(--text-muted);"
+                      th:text="${tagPostCounts[tag.id] ?: 0}">0</td>
+                  <td style="color:var(--text-muted);font-size:0.8rem;"
+                      th:text="${#temporals.format(tag.createdAt, 'yyyy-MM-dd')}">日期</td>
+                  <td>
+                    <form th:action="@{/admin/tags/{id}/delete(id=${tag.id})}" method="post" style="margin:0;"
+                          th:attr="onsubmit=|return confirm('确定删除标签「${tag.name}」？')|">
+                      <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                      <button type="submit" class="btn btn-sm btn-danger">删除</button>
+                    </form>
+                  </td>
+                </tr>
+                <tr th:if="${tags.isEmpty()}">
+                  <td colspan="5" style="text-align:center;color:var(--text-muted);padding:32px;">
+                    暂无标签
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 新建标签 -->
+        <div class="admin-card" style="position:sticky;top:80px;">
+          <div class="admin-card-header">
+            <span class="admin-card-title">添加标签</span>
+          </div>
+          <div class="admin-card-body">
+            <form th:action="@{/admin/tags}" method="post" class="admin-form">
+              <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+              <div class="form-field">
+                <label for="tagName">标签名称</label>
+                <input type="text" id="tagName" name="name" placeholder="例如：Java" required/>
+                <span class="form-hint">Slug 将根据名称自动生成</span>
+              </div>
+              <button type="submit" class="btn btn-primary">添加标签</button>
+            </form>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

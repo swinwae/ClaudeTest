@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      lang="zh-CN">
+<head th:replace="~{layout/admin-base :: head('分类管理')}"></head>
+<body>
+<div class="admin-layout">
+
+  <div th:replace="~{layout/admin-base :: sidebar(${adminSection})}"></div>
+
+  <div class="admin-main">
+    <div th:replace="~{layout/admin-base :: topbar('分类管理')}"></div>
+
+    <div class="admin-content">
+
+      <!-- 提示消息 -->
+      <div th:if="${successMsg}" class="alert alert-success">
+        <span th:text="${successMsg}"></span>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 360px;gap:20px;align-items:start;">
+
+        <!-- 分类列表 -->
+        <div class="admin-card">
+          <div class="admin-card-header">
+            <span class="admin-card-title">所有分类</span>
+            <span style="font-size:0.8rem;color:var(--text-muted);" th:text="${categories.size()} + ' 个分类'">0 个分类</span>
+          </div>
+          <div class="admin-table-wrapper">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>分类名</th>
+                  <th>Slug</th>
+                  <th>描述</th>
+                  <th>创建时间</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr th:each="cat : ${categories}">
+                  <td style="font-weight:500;" th:text="${cat.name}">分类名</td>
+                  <td style="color:var(--text-muted);font-size:0.85rem;font-family:var(--font-mono);"
+                      th:text="${cat.slug}">slug</td>
+                  <td style="color:var(--text-muted);font-size:0.875rem;"
+                      th:text="${cat.description}">描述</td>
+                  <td style="color:var(--text-muted);font-size:0.8rem;"
+                      th:text="${#temporals.format(cat.createdAt, 'yyyy-MM-dd')}">日期</td>
+                  <td>
+                    <form th:action="@{/admin/categories/{id}/delete(id=${cat.id})}" method="post" style="margin:0;"
+                          th:attr="onsubmit=|return confirm('确定删除分类「${cat.name}」？')|">
+                      <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                      <button type="submit" class="btn btn-sm btn-danger">删除</button>
+                    </form>
+                  </td>
+                </tr>
+                <tr th:if="${categories.isEmpty()}">
+                  <td colspan="5" style="text-align:center;color:var(--text-muted);padding:32px;">
+                    暂无分类
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 新建分类 -->
+        <div class="admin-card" style="position:sticky;top:80px;">
+          <div class="admin-card-header">
+            <span class="admin-card-title">添加分类</span>
+          </div>
+          <div class="admin-card-body">
+            <form th:action="@{/admin/categories}" method="post" class="admin-form">
+              <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+              <div class="form-field">
+                <label for="catName">分类名称</label>
+                <input type="text" id="catName" name="name" placeholder="例如：技术" required/>
+              </div>
+              <div class="form-field">
+                <label for="catDesc">描述（可选）</label>
+                <textarea id="catDesc" name="description" rows="3"
+                          placeholder="分类简介..."></textarea>
+              </div>
+              <button type="submit" class="btn btn-primary">添加分类</button>
+            </form>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

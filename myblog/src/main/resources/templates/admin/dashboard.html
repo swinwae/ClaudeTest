@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      lang="zh-CN">
+<head th:replace="~{layout/admin-base :: head('仪表盘')}"></head>
+<body>
+<div class="admin-layout">
+
+  <!-- 侧边栏 -->
+  <div th:replace="~{layout/admin-base :: sidebar(${adminSection})}"></div>
+
+  <!-- 主内容区 -->
+  <div class="admin-main">
+    <div th:replace="~{layout/admin-base :: topbar('仪表盘')}"></div>
+
+    <div class="admin-content">
+
+      <!-- 成功提示 -->
+      <div th:if="${successMsg}" class="alert alert-success">
+        <span th:text="${successMsg}"></span>
+      </div>
+
+      <!-- 统计卡片 -->
+      <div class="stats-cards">
+        <div class="stat-card">
+          <div class="stat-card-icon">📝</div>
+          <div>
+            <div class="stat-card-value" th:text="${totalPosts}">0</div>
+            <div class="stat-card-label">全部文章</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-icon">✅</div>
+          <div>
+            <div class="stat-card-value" th:text="${publishedPosts}">0</div>
+            <div class="stat-card-label">已发布</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-icon">📄</div>
+          <div>
+            <div class="stat-card-value" th:text="${draftPosts}">0</div>
+            <div class="stat-card-label">草稿</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-icon">🏷️</div>
+          <div>
+            <div class="stat-card-value" th:text="${totalTags}">0</div>
+            <div class="stat-card-label">标签</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-icon">📁</div>
+          <div>
+            <div class="stat-card-value" th:text="${totalCategories}">0</div>
+            <div class="stat-card-label">分类</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 快捷操作 -->
+      <div style="margin-bottom:24px;display:flex;gap:12px;">
+        <a th:href="@{/admin/posts/new}" class="btn btn-primary">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+          新建文章
+        </a>
+        <a th:href="@{/admin/posts}" class="btn">查看所有文章</a>
+      </div>
+
+      <!-- 最近文章 -->
+      <div class="admin-card">
+        <div class="admin-card-header">
+          <span class="admin-card-title">最近发布</span>
+          <a th:href="@{/admin/posts}" class="btn btn-sm">查看全部</a>
+        </div>
+        <div class="admin-table-wrapper">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>标题</th>
+                <th>标签</th>
+                <th>状态</th>
+                <th>发布时间</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr th:each="post : ${recentPosts}">
+                <td>
+                  <a th:href="@{/post/{id}(id=${post.id})}"
+                     target="_blank"
+                     th:text="${post.title}"
+                     style="color:var(--text-primary);font-weight:500;">标题</a>
+                </td>
+                <td>
+                  <span th:each="tag : ${post.tags}"
+                        class="badge badge-draft"
+                        style="margin-right:4px;"
+                        th:text="${tag.name}">标签</span>
+                </td>
+                <td>
+                  <span th:class="${post.status.name() == 'PUBLISHED'} ? 'badge badge-published' : 'badge badge-draft'"
+                        th:text="${post.status.name() == 'PUBLISHED'} ? '已发布' : '草稿'">状态</span>
+                </td>
+                <td th:text="${post.publishedAt != null} ? ${#temporals.format(post.publishedAt, 'yyyy-MM-dd')} : '-'">日期</td>
+                <td>
+                  <a th:href="@{/admin/posts/{id}/edit(id=${post.id})}" class="btn btn-sm">编辑</a>
+                </td>
+              </tr>
+              <tr th:if="${recentPosts.isEmpty()}">
+                <td colspan="5" style="text-align:center;color:var(--text-muted);padding:32px;">
+                  暂无文章，<a th:href="@{/admin/posts/new}">立即新建</a>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+</body>
+</html>

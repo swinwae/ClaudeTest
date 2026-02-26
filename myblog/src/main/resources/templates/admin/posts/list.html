@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      lang="zh-CN">
+<head th:replace="~{layout/admin-base :: head('文章管理')}"></head>
+<body>
+<div class="admin-layout">
+
+  <div th:replace="~{layout/admin-base :: sidebar(${adminSection})}"></div>
+
+  <div class="admin-main">
+    <div th:replace="~{layout/admin-base :: topbar('文章管理')}"></div>
+
+    <div class="admin-content">
+
+      <!-- 提示消息 -->
+      <div th:if="${successMsg}" class="alert alert-success">
+        <span th:text="${successMsg}"></span>
+      </div>
+
+      <!-- 操作栏 -->
+      <div class="admin-card" style="margin-bottom:16px;">
+        <div class="admin-card-body" style="padding:14px 20px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+            <!-- 搜索/筛选 -->
+            <form method="get" th:action="@{/admin/posts}" class="admin-search-bar">
+              <input type="text" name="search" placeholder="搜索标题..." th:value="${search}"/>
+              <select name="status">
+                <option value="ALL" th:selected="${currentStatus == '' or currentStatus == 'ALL'}">全部状态</option>
+                <option value="PUBLISHED" th:selected="${currentStatus == 'PUBLISHED'}">已发布</option>
+                <option value="DRAFT" th:selected="${currentStatus == 'DRAFT'}">草稿</option>
+              </select>
+              <button type="submit" class="btn">筛选</button>
+              <a th:href="@{/admin/posts}" class="btn">重置</a>
+            </form>
+            <!-- 新建按钮 -->
+            <a th:href="@{/admin/posts/new}" class="btn btn-primary">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+              新建文章
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- 文章列表 -->
+      <div class="admin-card">
+        <div class="admin-table-wrapper">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th style="width:40px;">ID</th>
+                <th>标题</th>
+                <th style="width:90px;">分类</th>
+                <th>标签</th>
+                <th style="width:80px;">状态</th>
+                <th style="width:120px;">阅读时长</th>
+                <th style="width:120px;">时间</th>
+                <th style="width:180px;">操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr th:each="post : ${posts.content}">
+                <td style="color:var(--text-muted);font-size:0.8rem;" th:text="${post.id}">1</td>
+                <td>
+                  <div style="font-weight:500;" th:text="${post.emoji} + ' ' + ${post.title}">标题</div>
+                  <div style="font-size:0.8rem;color:var(--text-muted);margin-top:2px;"
+                       th:text="${#strings.abbreviate(post.excerpt, 60)}">摘要</div>
+                </td>
+                <td style="color:var(--text-muted);font-size:0.85rem;"
+                    th:text="${post.category != null} ? ${post.category.name} : '—'">分类</td>
+                <td>
+                  <span th:each="tag : ${post.tags}"
+                        class="badge badge-draft"
+                        style="margin-right:4px;margin-bottom:2px;"
+                        th:text="${tag.name}">标签</span>
+                </td>
+                <td>
+                  <span th:class="${post.status.name() == 'PUBLISHED'} ? 'badge badge-published' : 'badge badge-draft'"
+                        th:text="${post.status.name() == 'PUBLISHED'} ? '已发布' : '草稿'">状态</span>
+                </td>
+                <td style="color:var(--text-muted);" th:text="${post.readTime} + ' 分钟'">5 分钟</td>
+                <td style="color:var(--text-muted);font-size:0.8rem;"
+                    th:text="${#temporals.format(post.createdAt, 'MM-dd HH:mm')}">日期</td>
+                <td>
+                  <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                    <a th:href="@{/admin/posts/{id}/edit(id=${post.id})}" class="btn btn-sm">编辑</a>
+                    <!-- 切换状态 -->
+                    <form th:action="@{/admin/posts/{id}/toggle(id=${post.id})}" method="post" style="margin:0;">
+                      <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                      <button type="submit"
+                              th:class="${post.status.name() == 'PUBLISHED'} ? 'btn btn-sm' : 'btn btn-sm btn-success'"
+                              th:text="${post.status.name() == 'PUBLISHED'} ? '撤回' : '发布'">切换</button>
+                    </form>
+                    <!-- 删除 -->
+                    <form th:action="@{/admin/posts/{id}/delete(id=${post.id})}" method="post" style="margin:0;"
+                          onsubmit="return confirm('确定删除此文章？此操作不可撤销。')">
+                      <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                      <button type="submit" class="btn btn-sm btn-danger">删除</button>
+                    </form>
+                  </div>
+                </td>
+              </tr>
+              <tr th:if="${posts.content.isEmpty()}">
+                <td colspan="8" style="text-align:center;color:var(--text-muted);padding:40px;">
+                  暂无文章
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- 分页 -->
+        <div th:if="${posts.totalPages > 1}" class="admin-pagination">
+          <a th:class="${posts.hasPrevious()} ? 'a' : 'disabled'"
+             th:href="${posts.hasPrevious()} ? @{/admin/posts(page=${posts.number - 1}, status=${currentStatus}, search=${search})} : '#'">
+            ←
+          </a>
+          <span th:each="i : ${#numbers.sequence(0, posts.totalPages - 1)}">
+            <a th:href="@{/admin/posts(page=${i}, status=${currentStatus}, search=${search})}"
+               th:text="${i + 1}"
+               th:class="${i == posts.number} ? 'active'">1</a>
+          </span>
+          <a th:class="${posts.hasNext()} ? 'a' : 'disabled'"
+             th:href="${posts.hasNext()} ? @{/admin/posts(page=${posts.number + 1}, status=${currentStatus}, search=${search})} : '#'">
+            →
+          </a>
+        </div>
+
+        <!-- 总数显示 -->
+        <div style="padding:12px 20px;color:var(--text-muted);font-size:0.8rem;border-top:1px solid var(--border-color);"
+             th:text="'共 ' + ${posts.totalElements} + ' 篇文章'">共 0 篇文章</div>
+      </div>
+
+    </div>
+  </div>
+</div>
+</body>
+</html>

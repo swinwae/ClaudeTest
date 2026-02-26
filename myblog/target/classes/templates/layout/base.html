@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<!--
+  公开博客端布局片段
+  使用方式：在各页面用 th:replace 引用 header / footer 片段
+-->
+<html xmlns:th="http://www.thymeleaf.org" lang="zh-CN">
+
+<!--/* ========== HEAD 片段 ========== */-->
+<head th:fragment="head(title)">
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title th:text="${title} + ' - MyBlog'">MyBlog</title>
+  <link rel="stylesheet" th:href="@{/css/style.css}"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="crossorigin"/>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&amp;family=JetBrains+Mono:wght@400;600&amp;display=swap"
+        rel="stylesheet"/>
+  <!-- 主题切换脚本提前加载，避免浅色闪烁 -->
+  <script th:src="@{/js/theme.js}"></script>
+</head>
+
+<!--/* ========== HEADER 片段 ========== */-->
+<header th:fragment="header(activePage)" class="site-header">
+  <div class="container">
+    <nav class="navbar">
+      <a th:href="@{/}" class="logo">
+        <span class="logo-icon">&#9670;</span>
+        <span class="logo-text">MyBlog</span>
+      </a>
+      <ul class="nav-links">
+        <li>
+          <a th:href="@{/}"
+             th:classappend="${activePage == 'home'} ? 'active'">首页</a>
+        </li>
+        <li>
+          <a th:href="@{/about}"
+             th:classappend="${activePage == 'about'} ? 'active'">关于</a>
+        </li>
+      </ul>
+      <div class="nav-actions">
+        <!-- 搜索框（仅首页显示，其他页面使用 URL 参数导航） -->
+        <form th:action="@{/}" method="get" class="search-box" style="display:flex;">
+          <input type="text" name="search" placeholder="搜索文章..."
+                 th:value="${param.search}" autocomplete="off"/>
+          <button type="submit" class="search-btn" aria-label="搜索">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+          </button>
+        </form>
+        <button class="theme-toggle" id="themeToggle" title="切换主题" type="button">
+          <svg class="sun-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+          </svg>
+          <svg class="moon-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+          </svg>
+        </button>
+        <button class="menu-toggle" id="menuToggle" type="button">&#9776;</button>
+      </div>
+    </nav>
+  </div>
+</header>
+
+<!--/* ========== FOOTER 片段 ========== */-->
+<footer th:fragment="footer" class="site-footer">
+  <div class="container">
+    <div class="footer-content">
+      <p class="footer-logo">&#9670; MyBlog</p>
+      <p class="footer-tagline">用文字记录世界</p>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2026 MyBlog. 用 &#10084; 构建</p>
+    </div>
+  </div>
+</footer>
+
+</html>

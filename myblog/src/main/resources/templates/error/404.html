@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="zh-CN">
+<head th:replace="~{layout/base :: head('页面不存在')}"></head>
+<body>
+<div th:replace="~{layout/base :: header('home')}"></div>
+
+<main style="min-height:60vh;display:flex;align-items:center;justify-content:center;padding:40px 20px;">
+  <div style="text-align:center;">
+    <div style="font-size:6rem;margin-bottom:16px;">🔍</div>
+    <h1 style="font-size:5rem;font-weight:700;color:var(--accent-primary);line-height:1;margin-bottom:8px;">404</h1>
+    <h2 style="font-size:1.5rem;margin-bottom:12px;color:var(--text-primary);">页面不存在</h2>
+    <p style="color:var(--text-muted);margin-bottom:28px;">你访问的页面可能已被删除或链接有误。</p>
+    <a th:href="@{/}"
+       style="display:inline-flex;align-items:center;gap:6px;padding:12px 28px;background:var(--accent-primary);color:white;border-radius:var(--radius-sm);font-weight:600;text-decoration:none;">
+      ← 返回首页
+    </a>
+  </div>
+</main>
+
+<div th:replace="~{layout/base :: footer}"></div>
+</body>
+</html>

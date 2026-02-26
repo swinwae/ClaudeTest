@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="zh-CN">
+<head th:replace="~{layout/base :: head(${post.title})}"></head>
+<body>
+
+<div th:replace="~{layout/base :: header(${activePage})}"></div>
+
+<!-- 返回顶部按钮 -->
+<button class="back-to-top" id="backToTop" aria-label="返回顶部">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+    <polyline points="18 15 12 9 6 15"></polyline>
+  </svg>
+</button>
+
+<main class="post-main">
+  <div class="container">
+    <div class="post-layout">
+
+      <!-- 文章主体 -->
+      <article class="article">
+        <!-- 文章头部 -->
+        <div class="article-header">
+          <div class="article-tags">
+            <span th:each="tag : ${post.tags}" class="article-tag" th:text="${tag.name}">标签</span>
+          </div>
+          <h1 class="article-title" th:text="${post.title}">文章标题</h1>
+          <div class="article-meta">
+            <span class="article-meta-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="16" y1="2" x2="16" y2="6"></line>
+                <line x1="8" y1="2" x2="8" y2="6"></line>
+                <line x1="3" y1="10" x2="21" y2="10"></line>
+              </svg>
+              <span th:text="${#temporals.format(post.publishedAt != null ? post.publishedAt : post.createdAt, 'yyyy年M月d日')}">日期</span>
+            </span>
+            <span class="article-meta-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
+              </svg>
+              <span th:text="${post.readTime} + ' 分钟阅读'">5 分钟阅读</span>
+            </span>
+          </div>
+        </div>
+
+        <!-- 封面 -->
+        <div class="article-cover"
+             th:style="|background: linear-gradient(135deg, ${@gradientHelper.get(post.id)})|">
+          <span style="font-size:5rem;" th:text="${post.emoji}">📝</span>
+        </div>
+
+        <!-- 文章正文（Markdown 前端渲染） -->
+        <div class="article-body" id="articleBody"></div>
+
+        <!-- 文章底部导航 -->
+        <div class="article-footer">
+          <a th:href="@{/}" class="article-nav-btn">← 返回首页</a>
+        </div>
+      </article>
+
+      <!-- 右侧边栏 -->
+      <aside class="post-sidebar">
+        <!-- 目录 -->
+        <div class="widget" id="tocWidget">
+          <h3 class="widget-title">目录</h3>
+          <nav class="toc" id="toc"></nav>
+        </div>
+
+        <!-- 相关文章 -->
+        <div class="widget" th:if="${!relatedPosts.isEmpty()}">
+          <h3 class="widget-title">相关文章</h3>
+          <ul class="related-posts">
+            <li th:each="p : ${relatedPosts}">
+              <a th:href="@{/post/{id}(id=${p.id})}" th:text="${p.title}">相关文章标题</a>
+              <span class="post-date"
+                    th:text="${#temporals.format(p.publishedAt != null ? p.publishedAt : p.createdAt, 'yyyy-MM-dd')}">日期</span>
+            </li>
+          </ul>
+        </div>
+      </aside>
+
+    </div>
+  </div>
+</main>
+
+<div th:replace="~{layout/base :: footer}"></div>
+
+<!--
+  将 Markdown 原文通过隐藏元素传给前端渲染器。
+  th:text 会自动转义 HTML 实体（< → &lt;），
+  JS 读取 textContent 时浏览器自动还原，安全无误。
+-->
+<div id="rawContent" style="display:none;" th:text="${post.content}"></div>
+
+<script th:src="@{/js/post-render.js}"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    // 读取 Markdown 原文并渲染
+    var raw = document.getElementById('rawContent').textContent;
+    var html = renderMarkdown(raw);
+    document.getElementById('articleBody').innerHTML = html;
+
+    // 构建目录
+    setTimeout(buildTOC, 50);
+
+    // 返回顶部按钮
+    var backToTop = document.getElementById('backToTop');
+    if (backToTop) {
+      window.addEventListener('scroll', function () {
+        backToTop.classList.toggle('visible', window.scrollY > 400);
+      });
+      backToTop.addEventListener('click', function () {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+    }
+  });
+</script>
+
+</body>
+</html>
