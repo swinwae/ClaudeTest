@@ -1,0 +1,10 @@
+# Maven 编译产物
+myblog/target/
+
+# IDE 配置
+.idea/
+*.iml
+.vscode/
+
+# 系统文件
+.DS_Store
