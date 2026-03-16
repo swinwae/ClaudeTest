@@ -220,6 +220,30 @@ ul { list-style: none; }
 [data-theme="dark"] .sun-icon { display: block; }
 [data-theme="dark"] .moon-icon { display: none; }
 
+/* 管理后台入口按钮 */
+.admin-entry-btn {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 50%;
+  width: 38px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all var(--transition);
+  color: var(--text-secondary);
+  text-decoration: none;
+}
+
+.admin-entry-btn:hover {
+  background: var(--accent-light);
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+}
+
+.admin-entry-btn svg { width: 18px; height: 18px; }
+
 .menu-toggle {
   display: none;
   background: none;
