@@ -8,6 +8,8 @@
 
 ## 常用命令
 
+### myblog（Spring Boot 博客）
+
 ```bash
 # 开发模式启动（自动重建表、显示 SQL 日志）
 cd myblog
@@ -19,6 +21,19 @@ mvn spring-boot:run
 ```
 
 启动后访问 `http://localhost:8080`。
+
+### ecc-explorer（ECC 可视化学习器）
+
+```bash
+# 生成数据文件（使用已有翻译缓存，无需联网）
+node ecc-explorer/generate.js
+
+# 打开可视化界面
+open ecc-explorer/index.html
+
+# ECC 插件升级后重新翻译所有组件（需 DeepSeek API Key）
+DEEPSEEK_API_KEY=sk-xxx node ecc-explorer/translate.js
+```
 
 ## 前置条件
 
@@ -130,3 +145,69 @@ Thymeleaf 调用方式：`th:style="|background: linear-gradient(135deg, ${@grad
 - `Post.category`：已设为 `FetchType.EAGER`，可在模板中直接访问。
 - `Post.tags`：已设为 `FetchType.EAGER`，可在模板中直接访问。
 - `Tag.posts` / `Category.posts`：保持 LAZY（反向集合）。管理后台需要文章数时，使用 `TagRepository.findTagPostCounts()` / `CategoryRepository.findCategoryPostCounts()` 的 JPQL COUNT 查询，结果以 `Map<Long, Long>` 形式传入模板，在模板中通过 `${tagPostCounts[tag.id]}` 访问，**不要**直接调用 `tag.posts.size()`。
+
+---
+
+## ecc-explorer 架构说明
+
+**ecc-explorer** 是用于学习 Everything Claude Code（ECC）插件的交互式可视化工具，纯前端单页应用，无需后端服务。
+
+### 技术栈
+
+| 层 | 技术 |
+|----|------|
+| 前端 | 原生 HTML / CSS / Vanilla JS（无框架、无构建工具） |
+| 数据生成 | Node.js 脚本（generate.js） |
+| AI 翻译 | DeepSeek API（deepseek-chat 模型） |
+| 数据格式 | JSON 内嵌为全局变量（`window.ECC_DATA`） |
+
+### 文件结构
+
+```
+ecc-explorer/
+├── generate.js     # 读取 ECC 插件目录，解析所有组件，合并翻译缓存，输出 data.js
+├── translate.js    # 调用 DeepSeek API 批量翻译，增量写入 zh-cache.json
+├── index.html      # 可视化界面（侧边栏导航 + 卡片网格 + 右滑详情面板）
+├── data.js         # generate.js 的输出物，window.ECC_DATA 全局变量
+└── zh-cache.json   # DeepSeek 翻译缓存，key 格式为 "type:id"（如 "agent:planner"）
+```
+
+### 数据流
+
+```
+ECC 插件目录（~/.claude/plugins/cache/everything-claude-code/）
+    ↓ generate.js 解析 agents/*.md、commands/*.md、skills/*/SKILL.md 等
+    ↓ 读取 zh-cache.json 合并翻译
+    → data.js（window.ECC_DATA）
+        ↓ index.html 加载并渲染
+        → 用户浏览器
+```
+
+### 翻译缓存格式
+
+`zh-cache.json` 每条记录的 key 为 `"type:id"`，value 为 DeepSeek 生成的结构：
+
+```json
+{
+  "agent:planner": {
+    "summary": "完整中文摘要（3-5句）",
+    "keyPoints": ["要点1", "要点2", "要点3"],
+    "whenToUse": "何时使用（1-2句）",
+    "tips": "实用技巧（1-2句）"
+  }
+}
+```
+
+### 详情面板布局逻辑
+
+所有组件的详情面板均按以下顺序渲染：
+
+1. **📖 中文说明**（DeepSeek 生成）— 摘要 + 要点列表 + 何时使用 + 技巧
+2. **配置信息**（模型、工具等结构化字段）
+3. **📄 查看原文（英文）**（可折叠，默认收起）
+
+### 注意事项
+
+- `s.zh` 字段在 Skills 中为**对象**（`{name, desc, summary, ...}`），不是字符串；渲染时须用 `s.zh.name` 而非 `s.zh`。
+- `zh-cache.json` 已包含 215 条翻译（18 agents + 48 commands + 94 skills + 16 hooks + 39 rules），ECC 版本升级后才需重新运行 `translate.js`。
+- `translate.js` 增量翻译，已缓存的条目不会重复调用 API。
