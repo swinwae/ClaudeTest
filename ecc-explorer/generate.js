@@ -280,24 +280,41 @@ const SKILL_CATEGORIES = {
 function main() {
   const { base, version } = findECCBase();
 
+  // 读取 DeepSeek 翻译缓存
+  const cacheFile = path.join(__dirname, 'zh-cache.json');
+  const zhCache = fs.existsSync(cacheFile)
+    ? JSON.parse(fs.readFileSync(cacheFile, 'utf8'))
+    : {};
+  const getCached = (type, id) => zhCache[`${type}:${id}`] || null;
+  const hasCached = Object.keys(zhCache).length > 0;
+  if (hasCached) console.log(`  已加载翻译缓存：${Object.keys(zhCache).length} 条`);
+
   // 读取 Agents
   console.log('  读取 Agents...');
-  const agents = readMdDir(path.join(base, 'agents')).map(({ id, fm, body }) => ({
-    id, name: fm.name || id,
-    description: fm.description || '',
-    tools: Array.isArray(fm.tools) ? fm.tools : [],
-    model: fm.model || 'sonnet',
-    content: body,
-    zh: AGENT_ZH[id] || { name: id, desc: fm.description || '', tags: [], when: '', tip: '' },
-  }));
+  const agents = readMdDir(path.join(base, 'agents')).map(({ id, fm, body }) => {
+    const base = AGENT_ZH[id] || { name: id, desc: fm.description || '', tags: [], when: '', tip: '' };
+    const cached = getCached('agent', id);
+    return {
+      id, name: fm.name || id,
+      description: fm.description || '',
+      tools: Array.isArray(fm.tools) ? fm.tools : [],
+      model: fm.model || 'sonnet',
+      content: body,
+      zh: { ...base, ...(cached || {}) },
+    };
+  });
 
   // 读取 Commands
   console.log('  读取 Commands...');
-  const commands = readMdDir(path.join(base, 'commands')).map(({ id, fm, body }) => ({
-    id, description: fm.description || '',
-    content: body,
-    zh: COMMAND_ZH[id] || { name: id, desc: fm.description || '', usage: `/${id}` },
-  }));
+  const commands = readMdDir(path.join(base, 'commands')).map(({ id, fm, body }) => {
+    const base = COMMAND_ZH[id] || { name: id, desc: fm.description || '', usage: `/${id}` };
+    const cached = getCached('command', id);
+    return {
+      id, description: fm.description || '',
+      content: body,
+      zh: { ...base, ...(cached || {}) },
+    };
+  });
 
   // 读取 Skills（每个子目录的 SKILL.md）
   console.log('  读取 Skills...');
@@ -311,6 +328,7 @@ function main() {
           const content = fs.readFileSync(skillFile, 'utf8');
           const { fm, body } = parseFrontmatter(content);
           const cat = SKILL_CATEGORIES[dir] || { cat: '其他', zh: dir };
+          const cached = getCached('skill', dir);
           return {
             id: dir,
             name: fm.name || dir,
@@ -318,7 +336,7 @@ function main() {
             origin: fm.origin || 'ECC',
             content: body,
             category: cat.cat,
-            zh: cat.zh,
+            zh: { name: cat.zh, desc: fm.description || '', ...(cached || {}) },
           };
         }).filter(Boolean)
     : [];
@@ -332,40 +350,45 @@ function main() {
         .map(file => {
           const id = path.basename(file, '.js');
           const content = fs.readFileSync(path.join(hooksDir, file), 'utf8');
-          // 提取注释
           const commentMatch = content.match(/\/\*\*([\s\S]*?)\*\//);
           const comment = commentMatch ? commentMatch[1].replace(/\s*\*\s?/g, '\n').trim() : '';
+          const base = HOOK_ZH[id] || { name: id, trigger: '未知', desc: '', profiles: [] };
+          const cached = getCached('hook', id);
           return {
-            id,
-            file,
-            content: content.slice(0, 2000), // 只取前2000字符
+            id, file,
+            content: content.slice(0, 2000),
             comment,
-            zh: HOOK_ZH[id] || { name: id, trigger: '未知', desc: '', profiles: [] },
+            zh: { ...base, ...(cached || {}) },
           };
         })
     : [];
   // 补充 adapter
   const adapterFile = path.join(hooksDir, 'adapter.js');
   if (fs.existsSync(adapterFile)) {
+    const cached = getCached('hook', 'adapter');
     hooks.push({
       id: 'adapter',
       file: 'adapter.js',
       content: fs.readFileSync(adapterFile, 'utf8').slice(0, 2000),
       comment: '',
-      zh: HOOK_ZH['adapter'],
+      zh: { ...HOOK_ZH['adapter'], ...(cached || {}) },
     });
   }
 
   // 读取 Rules
   console.log('  读取 Rules...');
   const rulesDir = path.join(base, '.cursor', 'rules');
-  const rules = readMdDir(rulesDir).map(({ id, fm, body }) => ({
-    id,
-    description: fm.description || '',
-    alwaysApply: fm.alwaysApply === true || fm.alwaysApply === 'true',
-    content: body,
-    zh: RULE_ZH[id] || { name: id, lang: '通用', desc: fm.description || '', key: '' },
-  }));
+  const rules = readMdDir(rulesDir).map(({ id, fm, body }) => {
+    const base = RULE_ZH[id] || { name: id, lang: '通用', desc: fm.description || '', key: '' };
+    const cached = getCached('rule', id);
+    return {
+      id,
+      description: fm.description || '',
+      alwaysApply: fm.alwaysApply === true || fm.alwaysApply === 'true',
+      content: body,
+      zh: { ...base, ...(cached || {}) },
+    };
+  });
 
   // 汇总
   const data = {

@@ -272,6 +272,40 @@ code{font-family:'JetBrains Mono','Fira Code',monospace;font-size:.88em}
 .panel-md strong{color:var(--text-bright)}
 .panel-md hr{border:none;border-top:1px solid var(--border);margin:12px 0}
 
+/* ─── 可折叠原文 ─────────────────────────────────────────────── */
+.collapsible-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:8px 12px;background:var(--bg3);border-radius:var(--radius);
+  cursor:pointer;border:1px solid var(--border);transition:.15s;
+  font-size:.8rem;color:var(--text-dim);font-weight:500;user-select:none;
+}
+.collapsible-header:hover{border-color:var(--accent);color:var(--text)}
+.collapsible-arrow{font-size:.7rem;transition:.25s;display:inline-block}
+.collapsible-content{display:none;margin-top:8px}
+.collapsible-content.open{display:block}
+
+/* ─── 中文要点列表 ───────────────────────────────────────────── */
+.key-points{list-style:none;margin:10px 0 0;padding:0;display:flex;flex-direction:column;gap:5px}
+.key-points li{
+  display:flex;align-items:flex-start;gap:8px;
+  padding:6px 10px;background:var(--bg3);border-radius:6px;
+  font-size:.83rem;line-height:1.5;
+}
+.key-points li::before{content:'▸';color:var(--accent);flex-shrink:0;margin-top:1px}
+
+/* ─── 中文总结块 ─────────────────────────────────────────────── */
+.zh-summary-block{
+  background:linear-gradient(135deg,rgba(88,166,255,.06),rgba(210,168,255,.06));
+  border:1px solid rgba(88,166,255,.2);border-radius:var(--radius);
+  padding:14px;margin-bottom:0;
+}
+.zh-summary-text{font-size:.88rem;color:var(--text-bright);line-height:1.7;margin-bottom:0}
+.zh-meta-row{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+.zh-meta-chip{
+  font-size:.75rem;padding:3px 10px;border-radius:12px;
+  background:var(--bg3);border:1px solid var(--border);color:var(--text-dim);
+}
+
 /* ─── 总览 Dashboard ────────────────────────────────────────────── */
 .overview-grid{
   display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));
@@ -692,20 +726,71 @@ function renderAgents() {
     <div class="card-grid">${items.join('')}</div>`;
 }
 
+/* ═══════════════════════════════════════════════════════════
+   中文优先面板公共函数
+═══════════════════════════════════════════════════════════ */
+let _collapseCounter = 0;
+
+// 渲染中文总结区块（使用 DeepSeek 翻译或手写描述）
+function renderZhBlock(zh) {
+  if (!zh) return '';
+  const summary   = zh.summary   || zh.desc     || '';
+  const keyPoints = zh.keyPoints || [];
+  const whenToUse = zh.whenToUse || zh.when      || '';
+  const tips      = zh.tips      || zh.tip       || '';
+  if (!summary && !keyPoints.length && !whenToUse && !tips) return '';
+
+  const kpHtml = keyPoints.length
+    ? `<ul class="key-points">${keyPoints.map(p => `<li>${p}</li>`).join('')}</ul>` : '';
+  const whenHtml = whenToUse
+    ? `<div style="margin-top:10px;font-size:.78rem;color:var(--text-dim);font-weight:600">💡 何时使用</div>
+       <div style="font-size:.84rem;color:var(--text);margin-top:4px;line-height:1.6">${whenToUse}</div>` : '';
+  const tipHtml = tips
+    ? `<div class="panel-tip" style="margin-top:10px;font-size:.82rem">⚡ ${tips}</div>` : '';
+
+  return `<div class="panel-section">
+    <div class="panel-section-title">📖 中文说明</div>
+    <div class="zh-summary-block">
+      ${summary ? `<div class="zh-summary-text">${summary}</div>` : ''}
+      ${kpHtml}${whenHtml}${tipHtml}
+    </div>
+  </div>`;
+}
+
+// 渲染可折叠原文区块
+function renderOriginalBlock(htmlContent, label) {
+  if (!htmlContent) return '';
+  const id = `col-${++_collapseCounter}`;
+  return `<div class="panel-section">
+    <div class="collapsible-header" onclick="toggleCol('${id}')">
+      <span>📄 ${label || '查看原文（英文）'}</span>
+      <span class="collapsible-arrow" id="arr-${id}">▶</span>
+    </div>
+    <div class="collapsible-content" id="${id}">
+      <div class="panel-md" style="margin-top:8px">${htmlContent}</div>
+    </div>
+  </div>`;
+}
+
+function toggleCol(id) {
+  const el = document.getElementById(id);
+  const arr = document.getElementById('arr-' + id);
+  el.classList.toggle('open');
+  arr.style.transform = el.classList.contains('open') ? 'rotate(90deg)' : '';
+}
+
 function openAgent(id) {
   const a = D.agents.find(x => x.id === id);
   if (!a) return;
   selectedId = id;
+  _collapseCounter = 0;
   const zh = a.zh || {};
   const modelColors = { opus: '#58a6ff', sonnet: '#3fb950', haiku: '#d2a8ff' };
-  document.getElementById('panelTitle').textContent = a.name;
-  document.getElementById('panelSubtitle').textContent = zh.name || '专家 Agent';
-  document.getElementById('panelBody').innerHTML = `
-    <div class="panel-section">
-      <div class="panel-section-title">中文描述</div>
-      <div class="panel-zh-desc">${zh.desc || a.description}</div>
-    </div>
-    <div class="panel-section">
+  document.getElementById('panelTitle').textContent = `${zh.name || a.name}`;
+  document.getElementById('panelSubtitle').textContent = `Agent · ${a.name} · ${a.model}`;
+  document.getElementById('panelBody').innerHTML =
+    renderZhBlock(zh) +
+    `<div class="panel-section">
       <div class="panel-section-title">配置信息</div>
       <div class="panel-info-grid">
         <div class="panel-info-item">
@@ -714,31 +799,17 @@ function openAgent(id) {
         </div>
         <div class="panel-info-item">
           <div class="panel-info-label">可用工具</div>
-          <div class="panel-info-value" style="font-size:.75rem">${a.tools.join(', ') || '-'}</div>
+          <div class="panel-info-value" style="font-size:.74rem">${a.tools.join(', ') || '-'}</div>
         </div>
       </div>
-    </div>
-    ${zh.when ? `
-    <div class="panel-section">
-      <div class="panel-section-title">何时使用</div>
-      <div class="panel-zh-desc" style="border-color:var(--accent4)">${zh.when}</div>
-    </div>` : ''}
-    ${zh.tip ? `
-    <div class="panel-section">
-      <div class="panel-section-title">使用技巧</div>
-      <div class="panel-tip">💡 ${zh.tip}</div>
-    </div>` : ''}
-    ${zh.tags && zh.tags.length ? `
-    <div class="panel-section">
+    </div>` +
+    (zh.tags && zh.tags.length ? `<div class="panel-section">
       <div class="panel-section-title">标签</div>
       <div style="display:flex;flex-wrap:wrap;gap:6px">
         ${zh.tags.map(t => `<span class="tag">${t}</span>`).join('')}
       </div>
-    </div>` : ''}
-    <div class="panel-section">
-      <div class="panel-section-title">完整说明</div>
-      <div class="panel-md">${renderMd(a.content)}</div>
-    </div>`;
+    </div>` : '') +
+    renderOriginalBlock(renderMd(a.content), '原始英文说明');
   openPanel();
 }
 
@@ -769,25 +840,21 @@ function renderCommands() {
 function openCommand(id) {
   const c = D.commands.find(x => x.id === id);
   if (!c) return;
+  _collapseCounter = 0;
   const zh = c.zh || {};
   document.getElementById('panelTitle').textContent = zh.name || c.id;
-  document.getElementById('panelSubtitle').textContent = `/${c.id}`;
-  document.getElementById('panelBody').innerHTML = `
-    <div class="panel-section">
-      <div class="panel-section-title">中文描述</div>
-      <div class="panel-zh-desc">${zh.desc || c.description}</div>
-    </div>
-    <div class="panel-section">
+  document.getElementById('panelSubtitle').textContent = `Command · /${c.id}`;
+  const usage = zh.usage || ('/' + c.id);
+  document.getElementById('panelBody').innerHTML =
+    renderZhBlock(zh) +
+    `<div class="panel-section">
       <div class="panel-section-title">调用方式</div>
       <div class="panel-usage">
-        <span>${zh.usage || '/' + c.id}</span>
-        <button class="copy-btn" onclick="copyText('${(zh.usage || '/' + c.id).replace(/'/g,"\\'")}')">复制</button>
+        <span>${usage}</span>
+        <button class="copy-btn" onclick="copyText('${usage.replace(/'/g,"\\'")}')">复制</button>
       </div>
-    </div>
-    <div class="panel-section">
-      <div class="panel-section-title">完整说明</div>
-      <div class="panel-md">${renderMd(c.content)}</div>
-    </div>`;
+    </div>` +
+    renderOriginalBlock(renderMd(c.content), '原始英文说明');
   openPanel();
 }
 
@@ -813,9 +880,9 @@ function renderSkills() {
         <span class="card-icon">🎯</span>
         <span class="badge badge-cat">${s.category}</span>
       </div>
-      <div class="card-title">${s.zh || s.name}</div>
+      <div class="card-title">${(s.zh && s.zh.name) || s.name || s.id}</div>
       <div class="card-zh" style="font-family:monospace;font-size:.78rem">${s.id}</div>
-      <div class="card-desc">${s.description}</div>
+      <div class="card-desc">${(s.zh && s.zh.desc) || s.description}</div>
     </div>`).join('');
 
   return `
@@ -835,14 +902,18 @@ function setFilter(cat) {
 function openSkill(id) {
   const s = D.skills.find(x => x.id === id);
   if (!s) return;
-  document.getElementById('panelTitle').textContent = s.zh || s.name;
-  document.getElementById('panelSubtitle').textContent = s.id;
-  document.getElementById('panelBody').innerHTML = `
-    <div class="panel-section">
+  _collapseCounter = 0;
+  const zh = s.zh || {};
+  const zhName = typeof zh === 'string' ? zh : (zh.name || s.id);
+  document.getElementById('panelTitle').textContent = zhName;
+  document.getElementById('panelSubtitle').textContent = `Skill · ${s.id} · ${s.category}`;
+  document.getElementById('panelBody').innerHTML =
+    renderZhBlock(typeof zh === 'string' ? { desc: s.description } : zh) +
+    `<div class="panel-section">
       <div class="panel-section-title">技能信息</div>
       <div class="panel-info-grid">
         <div class="panel-info-item">
-          <div class="panel-info-label">分类</div>
+          <div class="panel-info-label">领域分类</div>
           <div class="panel-info-value">${s.category}</div>
         </div>
         <div class="panel-info-item">
@@ -852,20 +923,13 @@ function openSkill(id) {
       </div>
     </div>
     <div class="panel-section">
-      <div class="panel-section-title">英文描述</div>
-      <div class="panel-zh-desc" style="border-color:var(--accent4)">${s.description || '(无描述)'}</div>
-    </div>
-    <div class="panel-section">
       <div class="panel-section-title">调用方式</div>
       <div class="panel-usage">
         <span>/${s.id}</span>
         <button class="copy-btn" onclick="copyText('/${s.id}')">复制</button>
       </div>
-    </div>
-    <div class="panel-section">
-      <div class="panel-section-title">完整说明</div>
-      <div class="panel-md">${renderMd(s.content)}</div>
-    </div>`;
+    </div>` +
+    renderOriginalBlock(renderMd(s.content), '原始英文说明');
   openPanel();
 }
 
@@ -945,16 +1009,14 @@ function renderHooks() {
 function openHook(id) {
   const h = D.hooks.find(x => x.id === id);
   if (!h) return;
+  _collapseCounter = 0;
   const zh = h.zh || {};
   const group = Object.entries(HOOK_GROUPS).find(([,ids]) => ids.includes(id))?.[0] || '其他';
   document.getElementById('panelTitle').textContent = zh.name || id;
-  document.getElementById('panelSubtitle').textContent = `${h.file} · ${zh.trigger || ''}`;
-  document.getElementById('panelBody').innerHTML = `
-    <div class="panel-section">
-      <div class="panel-section-title">功能说明</div>
-      <div class="panel-zh-desc">${zh.desc || ''}</div>
-    </div>
-    <div class="panel-section">
+  document.getElementById('panelSubtitle').textContent = `Hook · ${h.file} · ${zh.trigger || ''}`;
+  document.getElementById('panelBody').innerHTML =
+    renderZhBlock(zh) +
+    `<div class="panel-section">
       <div class="panel-section-title">触发信息</div>
       <div class="panel-info-grid">
         <div class="panel-info-item">
@@ -966,9 +1028,8 @@ function openHook(id) {
           <div class="panel-info-value">${group}</div>
         </div>
       </div>
-    </div>
-    ${zh.profiles && zh.profiles.length ? `
-    <div class="panel-section">
+    </div>` +
+    (zh.profiles && zh.profiles.length ? `<div class="panel-section">
       <div class="panel-section-title">启用 Profile</div>
       <div style="display:flex;gap:6px;flex-wrap:wrap">
         ${zh.profiles.map(p => `<span class="badge badge-profile" style="font-size:.82rem;padding:4px 10px">${p}</span>`).join('')}
@@ -976,11 +1037,8 @@ function openHook(id) {
       <div class="panel-tip" style="margin-top:8px">
         💡 通过环境变量 <code>ECC_HOOKS_PROFILE=standard</code> 控制启用哪些 hooks
       </div>
-    </div>` : ''}
-    <div class="panel-section">
-      <div class="panel-section-title">源码（前 2000 字符）</div>
-      <div class="panel-md"><pre><code>${escapeHtml(h.content || '')}</code></pre></div>
-    </div>`;
+    </div>` : '') +
+    renderOriginalBlock(`<pre><code>${escapeHtml(h.content || '')}</code></pre>`, '源码（前 2000 字符）');
   openPanel();
 }
 
@@ -1034,15 +1092,15 @@ function renderRules() {
 function openRule(id) {
   const r = D.rules.find(x => x.id === id);
   if (!r) return;
+  _collapseCounter = 0;
   const zh = r.zh || {};
   document.getElementById('panelTitle').textContent = zh.name || id;
-  document.getElementById('panelSubtitle').textContent = `${zh.lang || '通用'} · ${r.id}`;
-  document.getElementById('panelBody').innerHTML = `
-    <div class="panel-section">
-      <div class="panel-section-title">规则说明</div>
-      <div class="panel-zh-desc">${zh.desc || r.description}</div>
-    </div>
-    <div class="panel-section">
+  document.getElementById('panelSubtitle').textContent = `Rule · ${zh.lang || '通用'} · ${r.id}`;
+  // 将 zh.key 放入 tips，合并成统一的中文说明块
+  const zhBlock = { ...zh, tips: zh.tips || (zh.key ? `核心要点：${zh.key}` : '') };
+  document.getElementById('panelBody').innerHTML =
+    renderZhBlock(zhBlock) +
+    `<div class="panel-section">
       <div class="panel-section-title">规则信息</div>
       <div class="panel-info-grid">
         <div class="panel-info-item">
@@ -1054,16 +1112,8 @@ function openRule(id) {
           <div class="panel-info-value">${r.alwaysApply ? '✅ 是' : '❌ 否'}</div>
         </div>
       </div>
-    </div>
-    ${zh.key ? `
-    <div class="panel-section">
-      <div class="panel-section-title">核心要点</div>
-      <div class="panel-tip">🔑 ${zh.key}</div>
-    </div>` : ''}
-    <div class="panel-section">
-      <div class="panel-section-title">完整规则内容</div>
-      <div class="panel-md">${renderMd(r.content)}</div>
-    </div>`;
+    </div>` +
+    renderOriginalBlock(renderMd(r.content), '原始英文规则内容');
   openPanel();
 }
 
@@ -1097,10 +1147,13 @@ function renderSearch() {
     }
   });
   D.skills.forEach(s => {
-    if (s.id.includes(q) || (s.zh||'').includes(q) || s.category.includes(q)
+    const sZhName = (s.zh && s.zh.name) || s.id;
+    const sZhDesc = (s.zh && s.zh.desc) || s.description || '';
+    if (s.id.includes(q) || sZhName.includes(q) || s.category.includes(q)
+      || sZhDesc.toLowerCase().includes(q)
       || (s.description||'').toLowerCase().includes(q)) {
       results.push({ type: 'skill', icon: '🎯', label: 'Skill',
-        title: s.zh || s.id, sub: s.id, desc: s.description,
+        title: sZhName, sub: s.id, desc: sZhDesc || s.description,
         action: `openSkill('${s.id}')` });
     }
   });
