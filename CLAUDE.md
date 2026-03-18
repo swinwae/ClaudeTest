@@ -22,6 +22,16 @@ mvn spring-boot:run
 
 启动后访问 `http://localhost:8080`。
 
+### claude-learn（Claude Code 学习站）
+
+```bash
+# 生成数据文件（将 content/ Markdown 编译为 data.js）
+node claude-learn/generate.js
+
+# 打开学习界面
+open claude-learn/index.html
+```
+
 ### ecc-explorer（ECC 可视化学习器）
 
 ```bash
