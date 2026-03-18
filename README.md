@@ -87,6 +87,72 @@ myblog/
 - **主题色**：修改 `static/css/style.css` 中的 `--accent-primary` 变量
 - **作者信息**：编辑 `templates/about.html`
 
+<!-- AUTO-GENERATED: claude-learn section -->
+
+---
+
+## Claude Code 学习站（claude-learn）
+
+系统学习 Claude Code 的交互式学习平台，纯前端单页应用，无需后端服务。
+
+### 功能
+
+- **20 课系统学习路径**：入门篇 → 核心篇 → 进阶篇 → 精通篇
+- 每课包含可折叠的**动手练习**（提示 + 参考答案）
+- **学习进度**：localStorage 持久化，随时继续
+- **最佳实践**文章、**速查卡片**（快捷键/命令/配置参考）
+- 深色/浅色主题切换
+
+### 前提条件
+
+- Node.js 18+（仅运行 `generate.js` 时需要）
+
+### 脚本说明
+
+<!-- AUTO-GENERATED -->
+| 脚本 | 说明 |
+|------|------|
+| `node generate.js` | 将 `content/` 目录下的 Markdown 课程文件编译为 `data.js` |
+<!-- /AUTO-GENERATED -->
+
+### 快速开始
+
+```bash
+# 1. 生成数据文件
+node claude-learn/generate.js
+
+# 2. 用浏览器打开（无需服务器）
+open claude-learn/index.html
+```
+
+### 学习路径概览
+
+<!-- AUTO-GENERATED -->
+| 阶段 | 课程数 | 主要内容 |
+|------|--------|---------|
+| 🚀 入门篇 | 4 课 | 安装配置、第一次对话、核心工具、CLAUDE.md |
+| ⚡ 核心篇 | 6 课 | 文件搜索、代码生成、Git 工作流、TDD、Prompt 技巧、多文件重构 |
+| 🔧 进阶篇 | 6 课 | Agent 系统、自定义命令、Hooks、Rules、Context 管理、MCP 扩展 |
+| 🏆 精通篇 | 4 课 | 多 Agent 编排、性能优化、团队协作、CI/CD 集成 |
+<!-- /AUTO-GENERATED -->
+
+### 文件结构
+
+```
+claude-learn/
+├── generate.js          # 编译脚本：Markdown → data.js
+├── index.html           # 主界面（单文件 SPA，无依赖）
+├── data.js              # 编译产物（由 generate.js 生成）
+└── content/
+    ├── path/            # 学习路径课程（按阶段分目录）
+    ├── practices/       # 最佳实践文章
+    └── cheatsheet/      # 速查卡片内容
+```
+
+<!-- /AUTO-GENERATED: claude-learn section -->
+
+---
+
 <!-- AUTO-GENERATED: ecc-explorer section -->
 
 ---
