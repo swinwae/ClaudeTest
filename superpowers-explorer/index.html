@@ -382,9 +382,103 @@ function toggleTheme() {
 
 // ─── 工作流地图（Task 4 实现）──────────────────────────────────────────────
 function renderWorkflow() {
-  // Task 4 中实现
   const svg = document.getElementById('workflow-svg');
-  svg.innerHTML = '<text x="50" y="50" fill="#8b949e" font-size="14">工作流地图加载中...</text>';
+  const NODES = DATA.workflow.nodes;
+  const EDGES = DATA.workflow.edges;
+
+  // 手工布局坐标（x, y 为中心点）
+  const LAYOUT = {
+    'using-superpowers':              { x: 450, y: 40 },
+    'brainstorming':                  { x: 450, y: 110 },
+    'using-git-worktrees':            { x: 750, y: 180 },
+    'writing-plans':                  { x: 450, y: 190 },
+    'subagent-driven-development':    { x: 350, y: 290 },
+    'executing-plans':                { x: 590, y: 290 },
+    'dispatching-parallel-agents':    { x: 160, y: 290 },
+    'test-driven-development':        { x: 160, y: 370 },
+    'systematic-debugging':           { x: 750, y: 370 },
+    'requesting-code-review':         { x: 450, y: 390 },
+    'receiving-code-review':          { x: 700, y: 470 },
+    'verification-before-completion': { x: 450, y: 480 },
+    'writing-skills':                 { x: 750, y: 480 },
+    'finishing-a-development-branch': { x: 450, y: 560 },
+  };
+
+  // 颜色方案
+  const TYPE_COLORS = {
+    main:    { fill: '#1f3d2a', stroke: '#3fb950', text: '#3fb950' },
+    alt:     { fill: '#1f2d3d', stroke: '#58a6ff', text: '#58a6ff' },
+    support: { fill: '#21262d', stroke: '#8b949e', text: '#8b949e' },
+    debug:   { fill: '#2d1f1f', stroke: '#ffa657', text: '#ffa657' },
+    meta:    { fill: '#2d1f3d', stroke: '#d2a8ff', text: '#d2a8ff' },
+  };
+  const EDGE_COLORS = { main:'#3fb950', alt:'#58a6ff', support:'#8b949e', debug:'#ffa657' };
+
+  const NW = 180, NH = 36; // 节点宽高
+
+  // 生成箭头标记
+  const defs = `<defs>
+    ${['main','alt','support','debug'].map(t => `
+      <marker id="arrow-${t}" viewBox="0 0 10 10" refX="8" refY="5"
+        markerWidth="6" markerHeight="6" orient="auto">
+        <path d="M 0 0 L 10 5 L 0 10 z" fill="${EDGE_COLORS[t]}"/>
+      </marker>`).join('')}
+  </defs>`;
+
+  // 绘制边（连线）
+  const edges = EDGES.map(e => {
+    const from = LAYOUT[e.from];
+    const to = LAYOUT[e.to];
+    if (!from || !to) return '';
+    const color = EDGE_COLORS[e.type] || EDGE_COLORS.support;
+    // 贝塞尔曲线：从节点底部到节点顶部
+    const x1 = from.x, y1 = from.y + NH/2;
+    const x2 = to.x,   y2 = to.y - NH/2;
+    const cy = (y1 + y2) / 2;
+    const d = `M ${x1} ${y1} C ${x1} ${cy}, ${x2} ${cy}, ${x2} ${y2}`;
+    const isDashed = e.type === 'support' || e.type === 'alt';
+    return `<path d="${d}" fill="none" stroke="${color}" stroke-width="1.5"
+      ${isDashed ? 'stroke-dasharray="5,3"' : ''}
+      marker-end="url(#arrow-${e.type})" opacity="0.7"/>
+      <text x="${(x1+x2)/2 + 6}" y="${cy}" fill="${color}" font-size="10" opacity="0.8">${e.label}</text>`;
+  }).join('');
+
+  // 绘制节点
+  const nodes = NODES.map(n => {
+    const pos = LAYOUT[n.id];
+    if (!pos) return '';
+    const colors = TYPE_COLORS[n.type] || TYPE_COLORS.support;
+    const x = pos.x - NW/2, y = pos.y - NH/2;
+    return `<g class="wf-node" data-id="${n.id}" onclick="onWorkflowNodeClick('${n.id}')"
+      style="cursor:pointer">
+      <rect x="${x}" y="${y}" width="${NW}" height="${NH}" rx="6"
+        fill="${colors.fill}" stroke="${colors.stroke}" stroke-width="1.5"/>
+      <text x="${pos.x}" y="${pos.y + 5}" text-anchor="middle" fill="${colors.text}"
+        font-size="11" font-family="JetBrains Mono,monospace">${n.id}</text>
+    </g>`;
+  }).join('');
+
+  // 图例
+  const legend = `<g transform="translate(20, 520)">
+    <text fill="#8b949e" font-size="11" font-weight="600">图例：</text>
+    ${[
+      { color: '#3fb950', label: '黄金路径', dash: false },
+      { color: '#58a6ff', label: '替代路径', dash: true },
+      { color: '#8b949e', label: '支持技能', dash: true },
+      { color: '#ffa657', label: '调试支线', dash: false },
+    ].map((l, i) => `
+      <line x1="0" y1="${20+i*18}" x2="30" y2="${20+i*18}"
+        stroke="${l.color}" stroke-width="2" ${l.dash ? 'stroke-dasharray="5,3"' : ''}/>
+      <text x="36" y="${25+i*18}" fill="${l.color}" font-size="11">${l.label}</text>
+    `).join('')}
+  </g>`;
+
+  svg.innerHTML = defs + edges + nodes + legend;
+
+  // 更新 SVG 尺寸
+  svg.setAttribute('viewBox', '0 0 900 620');
+  svg.setAttribute('width', '900');
+  svg.setAttribute('height', '620');
 }
 
 function onWorkflowNodeClick(skillId) {
