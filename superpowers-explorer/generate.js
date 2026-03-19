@@ -120,9 +120,14 @@ function main() {
 
   // 读取翻译缓存
   const cacheFile = path.join(__dirname, 'zh-cache.json');
-  const zhCache = fs.existsSync(cacheFile)
-    ? JSON.parse(fs.readFileSync(cacheFile, 'utf8'))
-    : {};
+  let zhCache = {};
+  if (fs.existsSync(cacheFile)) {
+    try {
+      zhCache = JSON.parse(fs.readFileSync(cacheFile, 'utf8'));
+    } catch (e) {
+      console.warn(`  ⚠️ zh-cache.json 解析失败，跳过缓存：${e.message}`);
+    }
+  }
   const getCached = (type, id) => zhCache[`${type}:${id}`] || null;
   if (Object.keys(zhCache).length > 0) {
     console.log(`  已加载翻译缓存：${Object.keys(zhCache).length} 条`);
@@ -154,20 +159,23 @@ function main() {
 
   // 读取 Commands
   console.log('  读取 Commands...');
-  const commands = fs.readdirSync(path.join(base, 'commands'))
-    .filter(f => f.endsWith('.md') && !f.startsWith('_'))
-    .map(file => {
-      const id = path.basename(file, '.md');
-      const content = fs.readFileSync(path.join(base, 'commands', file), 'utf8');
-      const { fm, body } = parseFrontmatter(content);
-      return {
-        id,
-        name: fm.name || id,
-        description: fm.description || '',
-        raw: body,
-        zh: getCached('command', id),
-      };
-    });
+  const commandsDir = path.join(base, 'commands');
+  const commands = fs.existsSync(commandsDir)
+    ? fs.readdirSync(commandsDir)
+        .filter(f => f.endsWith('.md') && !f.startsWith('_'))
+        .map(file => {
+          const id = path.basename(file, '.md');
+          const content = fs.readFileSync(path.join(commandsDir, file), 'utf8');
+          const { fm, body } = parseFrontmatter(content);
+          return {
+            id,
+            name: fm.name || id,
+            description: fm.description || '',
+            raw: body,
+            zh: getCached('command', id),
+          };
+        })
+    : [];
 
   // 读取 Agents
   console.log('  读取 Agents...');
