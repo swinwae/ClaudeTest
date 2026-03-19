@@ -45,6 +45,19 @@ open ecc-explorer/index.html
 DEEPSEEK_API_KEY=sk-xxx node ecc-explorer/translate.js
 ```
 
+### superpowers-explorer（Superpowers 可视化学习器）
+
+```bash
+# 生成数据文件（解析 Superpowers 插件目录）
+node superpowers-explorer/generate.js
+
+# 打开可视化界面
+open superpowers-explorer/index.html
+
+# 插件升级后重新翻译（需 DeepSeek API Key）
+DEEPSEEK_API_KEY=sk-xxx node superpowers-explorer/translate.js
+```
+
 ## 前置条件
 
 1. Java 17+、Maven 3.9+
