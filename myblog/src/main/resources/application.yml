@@ -1,8 +1,18 @@
+# 默认激活 dev profile，生产部署时去掉此行或改为 prod
+# 生产环境启动命令示例：
+#   java -jar myblog.jar --spring.profiles.active=prod \
+#        --spring.datasource.username=myblog_user \
+#        --spring.datasource.password=your_password
+# 或通过环境变量注入（推荐，避免密码出现在命令行历史）：
+#   export SPRING_DATASOURCE_USERNAME=myblog_user
+#   export SPRING_DATASOURCE_PASSWORD=your_password
+#   java -jar myblog.jar
 spring:
   profiles:
     active: dev
   datasource:
     url: jdbc:mysql://localhost:3306/myblog?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useSSL=false
+    # 开发环境默认值；生产环境通过环境变量 SPRING_DATASOURCE_USERNAME / SPRING_DATASOURCE_PASSWORD 覆盖
     username: root
     password: 12345678
     driver-class-name: com.mysql.cj.jdbc.Driver
