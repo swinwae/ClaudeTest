@@ -8,3 +8,7 @@ myblog/target/
 
 # 系统文件
 .DS_Store
+
+# gsd-explorer
+gsd-explorer/.cache/
+gsd-explorer/data.js
