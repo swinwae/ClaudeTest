@@ -48,7 +48,7 @@ function ensureRepo() {
   } else {
     console.log('⏳ 克隆仓库...');
     fs.mkdirSync(CACHE_DIR, { recursive: true });
-    execSync(`git clone --depth 1 ${REPO_URL} ${CACHE_DIR}`, { stdio: 'inherit' });
+    execSync(`git clone --depth 1 ${REPO_URL} "${CACHE_DIR}"`, { stdio: 'inherit' });
     console.log('✓ 克隆完成');
   }
 }
