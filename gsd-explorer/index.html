@@ -1064,6 +1064,19 @@ let currentFilter = null;      // { type: 'phase'|'agents'|'hooks'|'uncategorize
 let selectedItem = null;
 let searchQuery = '';
 
+// 组件查找表（避免在 onclick 中内联巨大 JSON）
+const itemLookup = {};
+function buildLookup() {
+  D.phases.forEach(p => {
+    p.commands.forEach(c => { itemLookup[`${c.type}:${c.id}`] = c; });
+    p.agents.forEach(a => { itemLookup[`${a.type}:${a.id}`] = a; });
+  });
+  D.uncategorized.commands.forEach(c => { itemLookup[`${c.type}:${c.id}`] = c; });
+  D.uncategorized.agents.forEach(a => { itemLookup[`${a.type}:${a.id}`] = a; });
+  D.hooks.forEach(h => { itemLookup[`${h.type}:${h.id}`] = h; });
+}
+buildLookup();
+
 // ═══════════════════════════════════════════════════════════════════════
 // 初始化
 // ═══════════════════════════════════════════════════════════════════════
@@ -1342,7 +1355,7 @@ function renderCards() {
     const zhDesc = item.zh && item.zh.summary ? item.zh.summary : '';
     const typeLabel = getTypeLabel(item.type);
     return `<div class="card${highlighted ? ' highlighted' : ''}" style="animation-delay:${i * 25}ms"
-      onclick='openPanel(${JSON.stringify(item).replace(/'/g, "&#39;").replace(/</g, "\\u003c")})'>
+      onclick="openPanel(itemLookup['${item.type}:${item.id}'])">
       <div class="card-header">
         <span class="card-name">${esc(item.name || item.id)}</span>
         <span class="card-type ${item.type}">${typeLabel}</span>
