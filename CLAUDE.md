@@ -58,6 +58,22 @@ open superpowers-explorer/index.html
 DEEPSEEK_API_KEY=sk-xxx node superpowers-explorer/translate.js
 ```
 
+### gsd-explorer（GSD 可视化学习器）
+
+```bash
+# 生成数据文件（首次运行会自动 clone GSD 仓库）
+node gsd-explorer/generate.js
+
+# 打开可视化界面
+open gsd-explorer/index.html
+
+# 批量预翻译（需 DeepSeek API Key）
+DEEPSEEK_API_KEY=sk-xxx node gsd-explorer/translate.js
+
+# GSD 仓库更新后重新生成
+node gsd-explorer/generate.js
+```
+
 ## 前置条件
 
 1. Java 17+、Maven 3.9+
@@ -233,4 +249,61 @@ ECC 插件目录（~/.claude/plugins/cache/everything-claude-code/）
 
 - `s.zh` 字段在 Skills 中为**对象**（`{name, desc, summary, ...}`），不是字符串；渲染时须用 `s.zh.name` 而非 `s.zh`。
 - `zh-cache.json` 已包含 215 条翻译（18 agents + 48 commands + 94 skills + 16 hooks + 39 rules），ECC 版本升级后才需重新运行 `translate.js`。
+- `translate.js` 增量翻译，已缓存的条目不会重复调用 API。
+
+---
+
+## gsd-explorer 架构说明
+
+**gsd-explorer** 是用于学习 GET SHIT DONE (GSD) 插件的交互式可视化工具，纯前端单页应用，无需后端服务。数据源为 GitHub 仓库（非本地插件缓存）。
+
+### 技术栈
+
+| 层 | 技术 |
+|----|------|
+| 前端 | 原生 HTML / CSS / Vanilla JS（无框架、无构建工具） |
+| 数据生成 | Node.js 脚本（generate.js） |
+| AI 翻译 | DeepSeek API（deepseek-chat 模型） |
+| 数据源 | GitHub 仓库 `gsd-build/get-shit-done`（git clone 到本地） |
+| 数据格式 | JSON 内嵌为全局变量（`window.GSD_DATA`） |
+
+### 文件结构
+
+```
+gsd-explorer/
+├── generate.js     # clone/pull GSD 仓库，解析所有组件，合并翻译缓存，输出 data.js
+├── translate.js    # 调用 DeepSeek API 批量翻译，增量写入 zh-cache.json
+├── index.html      # 可视化界面（首页阶段流程图 + 侧边栏导航 + 卡片网格 + 右滑详情面板）
+├── data.js         # generate.js 的输出物，window.GSD_DATA 全局变量
+├── zh-cache.json   # DeepSeek 翻译缓存，key 格式为 "type:id"（如 "command:execute-phase"）
+└── .cache/         # git clone 的 GSD 仓库本地副本（.gitignore 排除）
+```
+
+### 数据流
+
+```
+GitHub repo (gsd-build/get-shit-done)
+    ↓ generate.js: git clone / git pull
+    ↓ 解析 agents/*.md、commands/gsd/*.md、hooks/*
+    ↓ 读取 zh-cache.json 合并翻译
+    → data.js (window.GSD_DATA)
+        ↓ index.html 加载并渲染
+        → 用户浏览器
+```
+
+### 翻译策略（双层）
+
+- **预翻译**（translate.js）：批量翻译所有组件的 summary / keyPoints / whenToUse / tips，写入 zh-cache.json。
+- **按需翻译**（浏览器端）：详情面板展示英文原文，用户点击"翻译原文"按钮调用 DeepSeek API 翻译全文，结果存入 localStorage。
+
+### UI 设计
+
+- **首页**：GSD 五阶段工作流总览（Discussion → Research → Planning → Execution → Verification），点击阶段卡片进入组件列表。
+- **列表页**：左侧按阶段/类型导航 + 中间卡片网格 + 右滑详情面板。
+- **视觉风格**：现代渐变风（紫蓝色调 `#667eea → #764ba2`），支持深色/浅色主题切换。
+
+### 注意事项
+
+- `.cache/gsd/` 和 `data.js` 已加入 `.gitignore`，不会被提交。
+- GSD 仓库目前有 31 agents、72 commands、9 hooks，generate.js 按关键词自动归入 5 个阶段（归类率约 89%）。
 - `translate.js` 增量翻译，已缓存的条目不会重复调用 API。
