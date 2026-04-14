@@ -11,4 +11,8 @@ myblog/target/
 
 # gsd-explorer
 gsd-explorer/.cache/
-gsd-explorer/data.js
+
+# 测试和头脑风暴产物
+.playwright-mcp/
+.superpowers/
+gsd-*.png
