@@ -34,7 +34,10 @@ def insert_image(db_path: str, filename: str, webdav_path: str, file_size: int) 
             (filename, webdav_path, uploaded_at, file_size),
         )
         conn.commit()
-        return get_image_by_id(db_path, cursor.lastrowid)
+        row = conn.execute(
+            "SELECT * FROM images WHERE id = ?", (cursor.lastrowid,)
+        ).fetchone()
+        return dict(row)
 
 
 def get_all_images(db_path: str) -> list[dict]:

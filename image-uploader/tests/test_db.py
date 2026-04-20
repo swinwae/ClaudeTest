@@ -11,10 +11,10 @@ def db_path(tmp_path):
 
 def test_init_db_creates_images_table(db_path):
     import sqlite3
-    conn = sqlite3.connect(db_path)
-    tables = [r[0] for r in conn.execute(
-        "SELECT name FROM sqlite_master WHERE type='table'"
-    ).fetchall()]
+    with sqlite3.connect(db_path) as conn:
+        tables = [r[0] for r in conn.execute(
+            "SELECT name FROM sqlite_master WHERE type='table'"
+        ).fetchall()]
     assert "images" in tables
 
 
