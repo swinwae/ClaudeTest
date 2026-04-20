@@ -1,0 +1,20 @@
+# frpc.toml — 部署到绿联 NAS Docker 的 FRP 客户端配置
+# 与 docker-compose.yml 一起放到 NAS 共享目录，如 /docker/frpc/
+
+serverAddr = "YOUR_ECS_PUBLIC_IP"   # 替换为 ECS 公网 IP
+serverPort = 7000
+
+auth.method = "token"
+auth.token  = "REPLACE_WITH_STRONG_TOKEN"   # 与 frps.toml 保持一致
+
+log.to    = "/var/log/frpc.log"
+log.level = "info"
+
+# 把 NAS 本机的 WebDAV 端口映射到 ECS 的 15005 端口
+# ECS 上 Flask 通过 http://127.0.0.1:15005 访问 NAS WebDAV
+[[proxies]]
+name       = "nas-webdav"
+type       = "tcp"
+localIP    = "127.0.0.1"
+localPort  = 5005          # NAS WebDAV HTTP 端口
+remotePort = 15005         # ECS 上监听的本地端口（不对外暴露）

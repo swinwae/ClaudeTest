@@ -1,0 +1,14 @@
+# docker-compose.frpc.yml — 在绿联 NAS 上运行 frpc
+# 使用方法：
+#   1. 把本文件和 frpc.toml 放到 NAS 同一目录（如 /docker/frpc/）
+#   2. 在绿联 NAS 的 Docker 管理界面导入，或 ssh 后 docker compose up -d
+
+version: "3"
+services:
+  frpc:
+    image: snowdreamtech/frpc:latest
+    container_name: frpc-nas-webdav
+    network_mode: host           # host 模式确保能访问 NAS 本机的 5005 端口
+    restart: always
+    volumes:
+      - ./frpc.toml:/etc/frp/frpc.toml:ro

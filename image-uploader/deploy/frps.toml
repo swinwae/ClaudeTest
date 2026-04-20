@@ -1,0 +1,10 @@
+# frps.toml — 部署到阿里云 ECS 的 FRP 服务端配置
+# 文件放到 ECS 的 /etc/frp/frps.toml
+
+bindPort = 7000          # frp 控制通道端口，需在 ECS 安全组放行（入方向 TCP 7000）
+
+auth.method = "token"
+auth.token  = "REPLACE_WITH_STRONG_TOKEN"   # 自定义一个强密码，frpc 保持一致
+
+log.to    = "/var/log/frps.log"
+log.level = "info"
