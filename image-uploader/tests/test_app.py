@@ -50,8 +50,8 @@ def test_upload_success_returns_201(client):
         resp = c.post("/upload", data=data, content_type="multipart/form-data")
     assert resp.status_code == 201
     body = resp.get_json()
-    assert body["filename"] == "cat.jpg"
-    assert body["webdav_path"] == "/images/cat.jpg"
+    assert body["filename"].endswith("cat.jpg")          # 有 uuid 前缀，用 endswith
+    assert body["webdav_path"].endswith("cat.jpg")       # 同上
     assert body["file_size"] == 7
 
 
@@ -103,8 +103,7 @@ def test_delete_image_success(client):
     record = db.insert_image(db_path, "del.jpg", "/images/del.jpg", 256)
     with patch("webdav_client.delete"):
         resp = c.delete(f"/images/{record['id']}")
-    assert resp.status_code == 200
-    assert resp.get_json()["success"] is True
+    assert resp.status_code == 204
     assert db.get_image_by_id(db_path, record["id"]) is None
 
 

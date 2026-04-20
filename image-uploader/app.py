@@ -1,5 +1,6 @@
 # app.py — Flask 主程序
 from flask import Flask, request, jsonify, render_template, Response, abort
+import uuid
 import config
 import db
 import webdav_client
@@ -39,7 +40,8 @@ def upload():
         return jsonify({"error": "不支持的文件类型，仅允许 jpg/png/gif/webp"}), 400
 
     data = file.read()
-    remote_path = f"{config.WEBDAV_IMAGE_DIR}/{file.filename}"
+    safe_name = f"{uuid.uuid4().hex}_{file.filename}"
+    remote_path = f"{config.WEBDAV_IMAGE_DIR}/{safe_name}"
 
     try:
         webdav_client.upload(
@@ -49,7 +51,7 @@ def upload():
     except Exception as e:
         return jsonify({"error": f"上传到 WebDAV 失败: {e}"}), 500
 
-    record = db.insert_image(config.DB_PATH, file.filename, remote_path, len(data))
+    record = db.insert_image(config.DB_PATH, safe_name, remote_path, len(data))
     return jsonify(record), 201
 
 
@@ -88,7 +90,7 @@ def delete_image(image_id: int):
     except Exception as e:
         return jsonify({"error": f"从 WebDAV 删除失败: {e}"}), 500
     db.delete_image(config.DB_PATH, image_id)
-    return jsonify({"success": True})
+    return "", 204
 
 
 if __name__ == "__main__":
