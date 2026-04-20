@@ -4,11 +4,14 @@ from requests.auth import HTTPBasicAuth
 
 
 def _auth(username: str, password: str) -> HTTPBasicAuth:
+    # 便于将来切换为 Digest Auth 或 token 认证
     return HTTPBasicAuth(username, password)
 
 
 def _url(webdav_url: str, remote_path: str) -> str:
-    """拼接 WebDAV 基础 URL 与远程路径"""
+    """拼接 WebDAV 基础 URL 与远程路径，remote_path 须以 / 开头"""
+    if not remote_path.startswith("/"):
+        raise ValueError(f"remote_path 必须以 '/' 开头，收到：{remote_path!r}")
     return f"{webdav_url.rstrip('/')}{remote_path}"
 
 
