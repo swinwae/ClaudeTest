@@ -3,7 +3,7 @@ import os
 import pathlib
 from dotenv import load_dotenv
 
-load_dotenv()
+load_dotenv(dotenv_path=pathlib.Path(__file__).parent / ".env", override=True)
 
 WEBDAV_URL: str = os.environ["WEBDAV_URL"]          # 如 https://shiyiwanli.ugreenlink.com:5005/dav
 WEBDAV_USERNAME: str = os.environ["WEBDAV_USERNAME"]
@@ -15,4 +15,4 @@ DB_PATH: str = os.environ.get(
 )
 
 ALLOWED_EXTENSIONS: set[str] = {"jpg", "jpeg", "png", "gif", "webp"}
-WEBDAV_IMAGE_DIR: str = "/images"
+WEBDAV_IMAGE_DIR: str = "/home/images"

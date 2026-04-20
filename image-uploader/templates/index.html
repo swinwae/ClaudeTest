@@ -266,12 +266,19 @@
     dropZone.addEventListener('drop', e => {
       e.preventDefault();
       dropZone.classList.remove('dragover');
-      fileInput.files = e.dataTransfer.files;
+      // 拖入后直接上传，无需手动点"上传"按钮
+      uploadFiles(e.dataTransfer.files);
+    });
+
+    // 选择文件后自动上传
+    fileInput.addEventListener('change', () => {
+      if (fileInput.files.length) uploadFiles(fileInput.files);
     });
 
     // ── 上传 ──────────────────────────────────────
-    function uploadFiles() {
-      const files = fileInput.files;
+    function uploadFiles(files) {
+      // 兼容无参数调用（手动点按钮）
+      if (!files) files = fileInput.files;
       if (!files.length) { showToast('请先选择图片'); return; }
 
       const progressWrap = document.getElementById('progressWrap');
