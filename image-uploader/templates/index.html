@@ -1,11 +1,401 @@
 <!DOCTYPE html>
-<html lang="zh">
+<html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
-  <title>图片上传器</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>图片上传</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #f0f2f8;
+      --card-bg: #fff;
+      --text: #1a1a2e;
+      --sub: #6b7280;
+      --border: #e5e7eb;
+      --accent1: #667eea;
+      --accent2: #764ba2;
+    }
+    [data-theme="dark"] {
+      --bg: #0f0f1a;
+      --card-bg: #1a1a2e;
+      --text: #e5e7eb;
+      --sub: #9ca3af;
+      --border: #2d2d44;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      min-height: 100vh;
+      transition: background .3s, color .3s;
+    }
+
+    header {
+      background: linear-gradient(135deg, var(--accent1), var(--accent2));
+      color: #fff;
+      padding: 1.2rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    header h1 { font-size: 1.4rem; font-weight: 700; }
+
+    .theme-btn {
+      background: rgba(255,255,255,.2);
+      border: none;
+      color: #fff;
+      padding: .4rem .9rem;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: .85rem;
+    }
+
+    .container { max-width: 1100px; margin: 0 auto; padding: 2rem 1.5rem; }
+
+    /* 上传区域 */
+    .upload-box {
+      background: var(--card-bg);
+      border: 2px dashed var(--accent1);
+      border-radius: 16px;
+      padding: 2.5rem;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color .2s, background .2s;
+      margin-bottom: 1.5rem;
+    }
+    .upload-box.dragover {
+      border-color: var(--accent2);
+      background: rgba(102,126,234,.07);
+    }
+    .upload-box p { color: var(--sub); margin-bottom: 1rem; font-size: 1rem; }
+    #fileInput { display: none; }
+
+    .btn {
+      display: inline-block;
+      padding: .55rem 1.4rem;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      font-size: .9rem;
+      font-weight: 600;
+      transition: opacity .2s;
+    }
+    .btn:hover { opacity: .85; }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent1), var(--accent2));
+      color: #fff;
+      margin-left: .5rem;
+    }
+    .btn-ghost {
+      background: var(--border);
+      color: var(--text);
+    }
+
+    /* 进度条 */
+    .progress-wrap { margin-bottom: 1rem; display: none; }
+    .progress-bar {
+      background: var(--border);
+      border-radius: 20px;
+      height: 8px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent1), var(--accent2));
+      width: 0%;
+      transition: width .2s;
+      border-radius: 20px;
+    }
+    .progress-label { font-size: .8rem; color: var(--sub); margin-top: .4rem; }
+
+    /* 列表标题 */
+    .list-header {
+      display: flex;
+      align-items: baseline;
+      gap: .8rem;
+      margin-bottom: 1.2rem;
+    }
+    .list-header h2 { font-size: 1.15rem; }
+    .list-header .count { color: var(--sub); font-size: .85rem; }
+
+    /* 卡片网格 */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 1.2rem;
+    }
+    .card {
+      background: var(--card-bg);
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      transition: transform .2s, box-shadow .2s;
+    }
+    .card:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,.12); }
+
+    .card-img {
+      width: 100%;
+      height: 150px;
+      object-fit: cover;
+      cursor: zoom-in;
+      background: var(--border);
+      display: block;
+    }
+    .card-body { padding: .8rem; }
+    .card-filename {
+      font-size: .82rem;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-bottom: .3rem;
+    }
+    .card-meta { font-size: .72rem; color: var(--sub); margin-bottom: .2rem; }
+    .card-path {
+      font-size: .68rem;
+      color: var(--sub);
+      word-break: break-all;
+      opacity: .75;
+      margin-bottom: .6rem;
+    }
+    .btn-del {
+      background: #fee2e2;
+      color: #dc2626;
+      border: none;
+      border-radius: 6px;
+      padding: .3rem .7rem;
+      font-size: .75rem;
+      cursor: pointer;
+      width: 100%;
+      transition: background .2s;
+    }
+    .btn-del:hover { background: #fecaca; }
+
+    .empty { text-align: center; color: var(--sub); padding: 3rem 0; }
+
+    /* Lightbox */
+    .lightbox {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.85);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      cursor: zoom-out;
+    }
+    .lightbox.active { display: flex; }
+    .lightbox img { max-width: 90vw; max-height: 90vh; border-radius: 8px; }
+
+    .toast {
+      position: fixed;
+      bottom: 1.5rem;
+      right: 1.5rem;
+      background: #1a1a2e;
+      color: #fff;
+      padding: .7rem 1.2rem;
+      border-radius: 8px;
+      font-size: .85rem;
+      opacity: 0;
+      transition: opacity .3s;
+      z-index: 999;
+    }
+    .toast.show { opacity: 1; }
+  </style>
 </head>
 <body>
-  <h1>image 上传管理</h1>
-  <p>此页面为占位模板，Task 6 将替换为完整版本。</p>
+  <header>
+    <h1>📷 图片上传</h1>
+    <button class="theme-btn" onclick="toggleTheme()">🌙 深色</button>
+  </header>
+
+  <div class="container">
+    <!-- 上传区 -->
+    <div class="upload-box" id="dropZone">
+      <p>拖拽图片到此处，或点击选择文件</p>
+      <input type="file" id="fileInput" accept="image/*" multiple>
+      <button class="btn btn-ghost" onclick="document.getElementById('fileInput').click()">选择文件</button>
+      <button class="btn btn-primary" onclick="uploadFiles()">上传</button>
+    </div>
+
+    <div class="progress-wrap" id="progressWrap">
+      <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+      <div class="progress-label" id="progressLabel">上传中...</div>
+    </div>
+
+    <!-- 列表 -->
+    <div class="list-header">
+      <h2>图片列表</h2>
+      <span class="count" id="countLabel"></span>
+    </div>
+    <div class="grid" id="grid"></div>
+  </div>
+
+  <!-- Lightbox -->
+  <div class="lightbox" id="lightbox" onclick="closeLightbox()">
+    <img id="lightboxImg" src="" alt="">
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // ── 主题 ──────────────────────────────────────
+    const root = document.documentElement;
+    const themeBtn = document.querySelector('.theme-btn');
+    let dark = localStorage.getItem('theme') === 'dark';
+    applyTheme();
+
+    function toggleTheme() {
+      dark = !dark;
+      localStorage.setItem('theme', dark ? 'dark' : 'light');
+      applyTheme();
+    }
+    function applyTheme() {
+      root.setAttribute('data-theme', dark ? 'dark' : 'light');
+      themeBtn.textContent = dark ? '☀️ 浅色' : '🌙 深色';
+    }
+
+    // ── 拖拽 ──────────────────────────────────────
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+
+    dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+    dropZone.addEventListener('drop', e => {
+      e.preventDefault();
+      dropZone.classList.remove('dragover');
+      fileInput.files = e.dataTransfer.files;
+    });
+
+    // ── 上传 ──────────────────────────────────────
+    function uploadFiles() {
+      const files = fileInput.files;
+      if (!files.length) { showToast('请先选择图片'); return; }
+
+      const progressWrap = document.getElementById('progressWrap');
+      const progressFill = document.getElementById('progressFill');
+      const progressLabel = document.getElementById('progressLabel');
+
+      let done = 0;
+      const total = files.length;
+      progressWrap.style.display = 'block';
+
+      const uploadOne = (file) => new Promise((resolve, reject) => {
+        const fd = new FormData();
+        fd.append('file', file);
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', '/upload');
+        xhr.upload.onprogress = e => {
+          if (e.lengthComputable) {
+            const pct = Math.round(((done + e.loaded / e.total) / total) * 100);
+            progressFill.style.width = pct + '%';
+            progressLabel.textContent = `上传中 ${pct}%（${done + 1}/${total}）`;
+          }
+        };
+        xhr.onload = () => {
+          if (xhr.status === 201) { done++; resolve(); }
+          else {
+            const msg = JSON.parse(xhr.responseText)?.error || '上传失败';
+            reject(new Error(`${file.name}: ${msg}`));
+          }
+        };
+        xhr.onerror = () => reject(new Error(`${file.name}: 网络错误`));
+        xhr.send(fd);
+      });
+
+      (async () => {
+        for (const file of files) {
+          try { await uploadOne(file); }
+          catch (err) { showToast(err.message); }
+        }
+        progressWrap.style.display = 'none';
+        progressFill.style.width = '0%';
+        fileInput.value = '';
+        showToast(`成功上传 ${done}/${total} 张`);
+        loadImages();
+      })();
+    }
+
+    // ── 列表 ──────────────────────────────────────
+    function loadImages() {
+      fetch('/images')
+        .then(r => r.json())
+        .then(images => {
+          const grid = document.getElementById('grid');
+          const countLabel = document.getElementById('countLabel');
+          countLabel.textContent = `共 ${images.length} 张`;
+          if (!images.length) {
+            grid.innerHTML = '<p class="empty">暂无图片，上传第一张吧 ✨</p>';
+            return;
+          }
+          grid.innerHTML = images.map(img => `
+            <div class="card" id="card-${img.id}">
+              <img class="card-img" src="/proxy/${img.id}"
+                   alt="${img.filename}"
+                   onclick="openLightbox(${img.id})"
+                   onerror="this.style.background='#e5e7eb'">
+              <div class="card-body">
+                <div class="card-filename" title="${img.filename}">${img.filename}</div>
+                <div class="card-meta">📅 ${formatTime(img.uploaded_at)}</div>
+                <div class="card-meta">📦 ${formatSize(img.file_size)}</div>
+                <div class="card-path" title="${img.webdav_path}">${img.webdav_path}</div>
+                <button class="btn-del" onclick="deleteImage(${img.id})">删除</button>
+              </div>
+            </div>
+          `).join('');
+        })
+        .catch(() => showToast('加载图片列表失败'));
+    }
+
+    // ── 删除 ──────────────────────────────────────
+    function deleteImage(id) {
+      if (!confirm('确定要删除这张图片吗？此操作不可撤销。')) return;
+      fetch(`/images/${id}`, { method: 'DELETE' })
+        .then(r => {
+          if (r.status === 204) {
+            document.getElementById(`card-${id}`)?.remove();
+            showToast('已删除');
+            loadImages();
+          } else {
+            return r.json().then(d => showToast(d.error || '删除失败'));
+          }
+        })
+        .catch(() => showToast('删除请求失败'));
+    }
+
+    // ── Lightbox ──────────────────────────────────
+    function openLightbox(id) {
+      document.getElementById('lightboxImg').src = `/proxy/${id}`;
+      document.getElementById('lightbox').classList.add('active');
+    }
+    function closeLightbox() {
+      document.getElementById('lightbox').classList.remove('active');
+      document.getElementById('lightboxImg').src = '';
+    }
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbox(); });
+
+    // ── 工具函数 ──────────────────────────────────
+    function formatTime(iso) {
+      if (!iso) return '';
+      const d = new Date(iso.replace('Z', '+00:00'));
+      return d.toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' });
+    }
+    function formatSize(bytes) {
+      if (bytes < 1024) return bytes + ' B';
+      if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+      return (bytes / 1048576).toFixed(1) + ' MB';
+    }
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 3000);
+    }
+
+    // ── 初始化 ────────────────────────────────────
+    loadImages();
+  </script>
 </body>
 </html>
