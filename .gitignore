@@ -16,3 +16,10 @@ gsd-explorer/.cache/
 .playwright-mcp/
 .superpowers/
 gsd-*.png
+
+# image-uploader
+image-uploader/.env
+image-uploader/images.db
+image-uploader/__pycache__/
+image-uploader/tests/__pycache__/
+image-uploader/.pytest_cache/
