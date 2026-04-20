@@ -37,7 +37,7 @@ def insert_image(db_path: str, filename: str, webdav_path: str, file_size: int) 
         return get_image_by_id(db_path, cursor.lastrowid)
 
 
-def get_all_images(db_path: str) -> list:
+def get_all_images(db_path: str) -> list[dict]:
     """返回所有图片记录，按上传时间倒序"""
     with _connect(db_path) as conn:
         rows = conn.execute(
