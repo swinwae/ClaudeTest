@@ -8,6 +8,9 @@ import webdav_client
 app = Flask(__name__)
 app.secret_key = config.FLASK_SECRET_KEY
 
+# 启动时自动初始化数据库
+db.init_db(config.DB_PATH)
+
 MIME_MAP: dict = {
     "jpg":  "image/jpeg",
     "jpeg": "image/jpeg",

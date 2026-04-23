@@ -1,11 +1,11 @@
 # frpc.toml — 部署到绿联 NAS Docker 的 FRP 客户端配置
 # 与 docker-compose.yml 一起放到 NAS 共享目录，如 /docker/frpc/
 
-serverAddr = "YOUR_ECS_PUBLIC_IP"   # 替换为 ECS 公网 IP
+serverAddr = "8.141.113.131"
 serverPort = 7000
 
 auth.method = "token"
-auth.token  = "REPLACE_WITH_STRONG_TOKEN"   # 与 frps.toml 保持一致
+auth.token  = "wt_frp_K9mXqP2nR8vL"
 
 log.to    = "/var/log/frpc.log"
 log.level = "info"
