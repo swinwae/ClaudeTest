@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>图片上传</title>
+  <script>window.__BASE_URL__ = "{{ base_url }}"</script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -241,6 +242,8 @@
   <div class="toast" id="toast"></div>
 
   <script>
+    const BASE = window.__BASE_URL__ || ''
+
     // ── 主题 ──────────────────────────────────────
     const root = document.documentElement;
     const themeBtn = document.querySelector('.theme-btn');
@@ -293,7 +296,7 @@
         const fd = new FormData();
         fd.append('file', file);
         const xhr = new XMLHttpRequest();
-        xhr.open('POST', '/upload');
+        xhr.open('POST', `${BASE}/upload`);
         xhr.upload.onprogress = e => {
           if (e.lengthComputable) {
             const pct = Math.round(((done + e.loaded / e.total) / total) * 100);
@@ -327,7 +330,7 @@
 
     // ── 列表 ──────────────────────────────────────
     function loadImages() {
-      fetch('/images')
+      fetch(`${BASE}/images`)
         .then(r => r.json())
         .then(images => {
           const grid = document.getElementById('grid');
@@ -339,7 +342,7 @@
           }
           grid.innerHTML = images.map(img => `
             <div class="card" id="card-${img.id}">
-              <img class="card-img" src="/proxy/${img.id}"
+              <img class="card-img" src="${BASE}/proxy/${img.id}"
                    alt="${img.filename}"
                    onclick="openLightbox(${img.id})"
                    onerror="this.style.background='#e5e7eb'">
@@ -359,7 +362,7 @@
     // ── 删除 ──────────────────────────────────────
     function deleteImage(id) {
       if (!confirm('确定要删除这张图片吗？此操作不可撤销。')) return;
-      fetch(`/images/${id}`, { method: 'DELETE' })
+      fetch(`${BASE}/images/${id}`, { method: 'DELETE' })
         .then(r => {
           if (r.status === 204) {
             document.getElementById(`card-${id}`)?.remove();
@@ -374,7 +377,7 @@
 
     // ── Lightbox ──────────────────────────────────
     function openLightbox(id) {
-      document.getElementById('lightboxImg').src = `/proxy/${id}`;
+      document.getElementById('lightboxImg').src = `${BASE}/proxy/${id}`;
       document.getElementById('lightbox').classList.add('active');
     }
     function closeLightbox() {

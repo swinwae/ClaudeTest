@@ -29,7 +29,7 @@ def _allowed(filename: str) -> bool:
 
 @app.route("/")
 def index():
-    return render_template("index.html")
+    return render_template("index.html", base_url=config.BASE_URL)
 
 
 @app.route("/upload", methods=["POST"])

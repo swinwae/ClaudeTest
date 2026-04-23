@@ -16,3 +16,4 @@ DB_PATH: str = os.environ.get(
 
 ALLOWED_EXTENSIONS: set[str] = {"jpg", "jpeg", "png", "gif", "webp"}
 WEBDAV_IMAGE_DIR: str = "/home/images"
+BASE_URL: str = os.environ.get("BASE_URL", "").rstrip("/")
